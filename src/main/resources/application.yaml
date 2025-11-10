@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /safetyconstruction
+
+
+spring:
+  cache:
+    type: redis
+
+  datasource:
+    url: "jdbc:mysql://localhost:3306/safetyconstruction"
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+jwt:
+  signerKey: "dxNB3fbQncxBRM8JL/9gVJFrBmYqFXlXDF/J6430AZPdERwwzytex4gvHlu0pBU3"
+  valid-duration: 3600 # in second
+  refreshable-duration: 3600 # in seconds
