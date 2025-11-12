@@ -1,13 +1,13 @@
 package com.safetyconstruction.backend.mapper;
 
-import com.safetyconstruction.backend.dto.request.role.RoleUpdateRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import com.safetyconstruction.backend.dto.request.role.RoleCreationRequest;
+import com.safetyconstruction.backend.dto.request.role.RoleUpdateRequest;
 import com.safetyconstruction.backend.dto.response.RoleResponse;
 import com.safetyconstruction.backend.entity.Role;
-import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface RoleMapper {

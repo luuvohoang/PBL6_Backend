@@ -1,10 +1,9 @@
 package com.safetyconstruction.backend.service;
 
-import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,8 +14,8 @@ import org.springframework.stereotype.Service;
 import com.safetyconstruction.backend.dto.request.UserCreationRequest;
 import com.safetyconstruction.backend.dto.request.UserUpdateRequest;
 import com.safetyconstruction.backend.dto.response.UserResponse;
+import com.safetyconstruction.backend.entity.Role;
 import com.safetyconstruction.backend.entity.User;
-import com.safetyconstruction.backend.enums.Role;
 import com.safetyconstruction.backend.exception.AppException;
 import com.safetyconstruction.backend.exception.ErrorCode;
 import com.safetyconstruction.backend.mapper.UserMapper;
@@ -42,48 +41,38 @@ public class UserService {
     public UserResponse createUser(UserCreationRequest request) {
         log.info("Service Creating user");
 
-        User user = userMapper.toUser(request);
+        // --- BƯỚC 1: VALIDATE CHỦ ĐỘNG (Cách "Hiện tại") ---
+        // (Nhanh hơn, sạch hơn, và dễ test hơn là dùng try-catch)
 
+        if (userRepository.existsByName(request.getName())) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.INVALID_EMAIL);
+        }
+        // --- HẾT BƯỚC 1 ---
+
+        // --- BƯỚC 2: MAP VÀ GÁN DỮ LIỆU (Logic của bạn đã đúng) ---
+        User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
-        //                user.setRoles(roles);
+        // Gán Role "USER" mặc định (Giả định Role là Entity)
+        Role userRole = roleRepository
+                .findByName("USER")
+                .orElseThrow(() -> new RuntimeException("FATAL: Default USER Role not found in database."));
+
+        // (Bỏ comment dòng user.setRoles của bạn)
+        user.setRoles(new HashSet<>(Collections.singleton(userRole)));
+
+        // --- BƯỚC 3: LƯU (VỚI TRY...CATCH TỐI GIẢN) ---
         try {
             user = userRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            // Lấy nguyên nhân gốc rễ (Root Cause)
-            Throwable rootCause = ex.getRootCause();
-            String errorMessage = null;
+            // Lỗi này KHÔNG NÊN xảy ra (vì đã check ở Bước 1),
+            // trừ khi có 2 request trùng nhau CÙNG MỘT LÚC (Race Condition)
+            log.error("->>>>> Race Condition Detected or Unhandled Constraint: {}", ex.getMessage());
 
-            if (rootCause instanceof ConstraintViolationException) {
-                // Case 1: Ngoại lệ gốc rễ là Hibernate ConstraintViolationException
-                ConstraintViolationException cve = (ConstraintViolationException) rootCause;
-                errorMessage = cve.getSQLException().getMessage();
-
-            } else if (rootCause instanceof SQLIntegrityConstraintViolationException) {
-                // Case 2: Ngoại lệ gốc rễ là Java SQLIntegrityConstraintViolationException (phổ biến trong MySQL)
-                SQLIntegrityConstraintViolationException sqlex = (SQLIntegrityConstraintViolationException) rootCause;
-                errorMessage = sqlex.getMessage();
-            }
-
-            if (errorMessage != null) {
-                log.error("->>>>> SQL Error Message: " + errorMessage);
-
-                // Kiểm tra Lỗi Trùng Lặp EMAIL: Dựa vào tên khóa 'user.email'
-                if (errorMessage.contains("user.email")) {
-                    throw new AppException(ErrorCode.INVALID_EMAIL);
-                }
-
-                // Kiểm tra Lỗi Trùng Lặp USERNAME/Trường khác: Dựa vào tên khóa tự động (hoặc tên cột)
-                else if (errorMessage.contains("for key 'user")) {
-                    throw new AppException(ErrorCode.USER_EXISTED);
-                }
-
-                log.error("->>>>> Không bắt được lỗi trùng lặp chi tiết");
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
-            }
-
+            // Ném ra lỗi chung chung vì đây là trường hợp hiếm
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
 
@@ -124,6 +113,7 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(String userId) {
         userRepository.deleteById(userId);
     }

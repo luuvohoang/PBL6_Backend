@@ -57,8 +57,9 @@ public class AlertService {
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         Camera camera = request.getCameraId() != null
-                ? cameraRepository.findById(request.getCameraId())
-                .orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND))
+                ? cameraRepository
+                        .findById(request.getCameraId())
+                        .orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND))
                 : null;
 
         Alert alert = alertMapper.toAlert(request, project, camera);
@@ -90,7 +91,8 @@ public class AlertService {
 
         Specification<Alert> spec = Specification.allOf(
                 AlertSpecification.withProjectId(alert.getProject().getId()),
-                AlertSpecification.withCameraId(alert.getCamera() != null ? alert.getCamera().getId() : null),
+                AlertSpecification.withCameraId(
+                        alert.getCamera() != null ? alert.getCamera().getId() : null),
                 AlertSpecification.withType(alert.getType()),
                 AlertSpecification.withStatus("NEW"));
 
@@ -133,8 +135,10 @@ public class AlertService {
                 AlertSpecification.withType(searchRequest.getType()),
                 AlertSpecification.withSeverity(searchRequest.getSeverity()),
                 AlertSpecification.withStatus(searchRequest.getAlertStatus()),
-                AlertSpecification.withConfidenceRange(searchRequest.getMinConfidence(), searchRequest.getMaxConfidence()),
-                AlertSpecification.withHappenedTimeRange(searchRequest.getHappenedAfter(), searchRequest.getHappenedBefore()));
+                AlertSpecification.withConfidenceRange(
+                        searchRequest.getMinConfidence(), searchRequest.getMaxConfidence()),
+                AlertSpecification.withHappenedTimeRange(
+                        searchRequest.getHappenedAfter(), searchRequest.getHappenedBefore()));
 
         return alertRepository.findAll(spec, pageable).map(alertMapper::toAlert);
     }
@@ -169,8 +173,7 @@ public class AlertService {
     @Transactional
     @PreAuthorize("hasAuthority('ALERT_UPDATE')")
     public AlertResponse reviewAlert(Long alertId, AlertReviewRequest request) {
-        Alert alert = alertRepository.findById(alertId)
-                .orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
+        Alert alert = alertRepository.findById(alertId).orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
 
         User reviewer = userRepository
                 .findById(request.getReviewerId())
@@ -193,7 +196,8 @@ public class AlertService {
     @PostAuthorize("hasAuthority('ALERT_READ')")
     public AlertResponse getAlertById(Long alertId) {
         log.info("Service: Getting alert id {}", alertId);
-        return alertRepository.findById(alertId)
+        return alertRepository
+                .findById(alertId)
                 .map(alertMapper::toAlert)
                 .orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
     }
@@ -205,8 +209,7 @@ public class AlertService {
     @Transactional
     @PreAuthorize("hasAuthority('ALERT_DELETE')")
     public void deleteAlert(Long alertId) {
-        Alert alert = alertRepository.findById(alertId)
-                .orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
+        Alert alert = alertRepository.findById(alertId).orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
         alertRepository.delete(alert);
         log.info("Deleted alert id {}", alertId);
     }

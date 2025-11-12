@@ -3,7 +3,6 @@ package com.safetyconstruction.backend.dto.response;
 import java.time.LocalDate;
 import java.util.Set;
 
-import com.safetyconstruction.backend.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

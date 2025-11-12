@@ -125,15 +125,13 @@ public class NotificationService {
             pageable = org.springframework.data.domain.PageRequest.of(
                     pageable.getPageNumber(),
                     pageable.getPageSize(),
-                    Sort.by("createdAt").descending()
-            );
+                    Sort.by("createdAt").descending());
         }
 
         // --- SỬA LỖI Ở ĐÂY ---
         Specification<Notification> spec = Specification.allOf(byUsername(username)); // <-- Sửa
 
-        return notificationRepository.findAll(spec, pageable)
-                .map(mapper::toNotificationResponse);
+        return notificationRepository.findAll(spec, pageable).map(mapper::toNotificationResponse);
     }
 
     // Giả sử bạn đã inject UserRepository
@@ -142,18 +140,20 @@ public class NotificationService {
 
     @Cacheable("notifications") // (Giả sử tên cache là "notifications")
     public Page<NotificationResponse> listMyNotifications(Pageable pageable) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUsername =
+                SecurityContextHolder.getContext().getAuthentication().getName();
         Specification<Notification> spec = Specification.allOf(byUsername(currentUsername));
-        return notificationRepository.findAll(spec, pageable)
-                .map(mapper::toNotificationResponse);
+        return notificationRepository.findAll(spec, pageable).map(mapper::toNotificationResponse);
     }
 
     @Transactional
     @CacheEvict(cacheNames = "notifications", allEntries = true)
     public NotificationResponse markAsRead(Long notificationId) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUsername =
+                SecurityContextHolder.getContext().getAuthentication().getName();
 
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository
+                .findById(notificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getUser().getName().equals(currentUsername)) {
@@ -169,14 +169,13 @@ public class NotificationService {
     @CacheEvict(cacheNames = "notifications", allEntries = true)
     public void markAllAsRead() {
         // 1. Lấy TÊN đăng nhập
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUsername =
+                SecurityContextHolder.getContext().getAuthentication().getName();
         log.info("Service: Marking all as read for user {}", currentUsername);
 
         // 2. Dùng 'byUsername' (thay vì byUserId)
-        Specification<Notification> unreadSpec = Specification.allOf(
-                byUsername(currentUsername),
-                (root, query, cb) -> cb.isFalse(root.get("read"))
-        );
+        Specification<Notification> unreadSpec =
+                Specification.allOf(byUsername(currentUsername), (root, query, cb) -> cb.isFalse(root.get("read")));
 
         List<Notification> unreadNotifications = notificationRepository.findAll(unreadSpec);
 
@@ -193,6 +192,4 @@ public class NotificationService {
                 ? null
                 : cb.equal(root.get("user").get("name"), username); // So sánh TÊN (Name)
     }
-
-
 }

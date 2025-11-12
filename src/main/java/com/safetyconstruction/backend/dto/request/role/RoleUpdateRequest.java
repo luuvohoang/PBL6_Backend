@@ -1,7 +1,8 @@
 package com.safetyconstruction.backend.dto.request.role;
 
-import lombok.*;
 import java.util.Set;
+
+import lombok.*;
 
 @Data
 @NoArgsConstructor

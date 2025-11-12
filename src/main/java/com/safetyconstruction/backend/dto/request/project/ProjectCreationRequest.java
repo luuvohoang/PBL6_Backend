@@ -3,11 +3,11 @@ package com.safetyconstruction.backend.dto.request.project;
 import java.time.LocalDate;
 import java.util.Set;
 
-import com.safetyconstruction.backend.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 
 import com.safetyconstruction.backend.dto.request.camera.CameraCreationRequest;
+import com.safetyconstruction.backend.entity.User;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

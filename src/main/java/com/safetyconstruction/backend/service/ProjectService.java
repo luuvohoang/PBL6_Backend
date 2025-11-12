@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.safetyconstruction.backend.entity.User;
-import com.safetyconstruction.backend.repository.UserRepository;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -22,11 +20,13 @@ import com.safetyconstruction.backend.dto.request.project.ProjectUpdateRequest;
 import com.safetyconstruction.backend.dto.response.ProjectResponse;
 import com.safetyconstruction.backend.entity.Camera;
 import com.safetyconstruction.backend.entity.Project;
+import com.safetyconstruction.backend.entity.User;
 import com.safetyconstruction.backend.exception.AppException;
 import com.safetyconstruction.backend.exception.ErrorCode;
 import com.safetyconstruction.backend.mapper.CameraMapper;
 import com.safetyconstruction.backend.mapper.ProjectMapper;
 import com.safetyconstruction.backend.repository.ProjectRepository;
+import com.safetyconstruction.backend.repository.UserRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +69,10 @@ public class ProjectService {
         project.setCameras(cameras);
 
         // Lấy user hiện tại
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByName(currentUsername)
+        String currentUsername =
+                SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository
+                .findByName(currentUsername)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         project.setManager(currentUser);
@@ -91,12 +93,13 @@ public class ProjectService {
     @PreAuthorize("hasAuthority('PROJECT_UPDATE')")
     public ProjectResponse update(Long id, ProjectUpdateRequest request) {
         log.info("Service: Updating project id {}", id);
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+        Project project =
+                projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         // Cập nhật manager nếu có managerId trong request
         if (request.getManagerId() != null) {
-            User newManager = userRepository.findById(request.getManagerId())
+            User newManager = userRepository
+                    .findById(request.getManagerId())
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
             project.setManager(newManager);
             log.info("Updated manager to: {}", newManager.getName());
@@ -105,7 +108,9 @@ public class ProjectService {
         projectMapper.updateProject(project, request);
         Project savedProject = projectRepository.save(project);
         ProjectResponse response = projectMapper.toProjectResponse(savedProject);
-        log.info("Returning project response with managerName: {}", response.getManager().getName());
+        log.info(
+                "Returning project response with managerName: {}",
+                response.getManager().getName());
         return response;
     }
 
@@ -116,8 +121,8 @@ public class ProjectService {
     @PreAuthorize("hasAuthority('PROJECT_DELETE')")
     public void delete(Long id) {
         log.info("Service: Deleting project id {}", id);
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+        Project project =
+                projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
         projectRepository.delete(project);
     }
 
@@ -132,8 +137,8 @@ public class ProjectService {
         User currentUser = getCurrentUser();
 
         Page<Project> projects;
-        boolean isAdmin = currentUser.getRoles().stream()
-                .anyMatch(r -> r.getName().equalsIgnoreCase("ADMIN"));
+        boolean isAdmin =
+                currentUser.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase("ADMIN"));
 
         if (isAdmin) {
             projects = projectRepository.findAll(pageable);
@@ -153,16 +158,15 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse findById(Long id) {
         log.info("Service: Get project by id {}", id);
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+        Project project =
+                projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
         return projectMapper.toProjectResponse(project);
     }
 
     // --- private helpers ---
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByName(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userRepository.findByName(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
     public boolean isProjectManager(Long projectId, String username) {
@@ -174,9 +178,8 @@ public class ProjectService {
         String errorMessage = null;
 
         if (rootCause instanceof ConstraintViolationException) {
-            errorMessage = ((ConstraintViolationException) rootCause)
-                    .getSQLException()
-                    .getMessage();
+            errorMessage =
+                    ((ConstraintViolationException) rootCause).getSQLException().getMessage();
         } else if (rootCause instanceof SQLIntegrityConstraintViolationException) {
             errorMessage = ((SQLIntegrityConstraintViolationException) rootCause).getMessage();
         }

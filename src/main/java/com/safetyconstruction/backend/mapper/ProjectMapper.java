@@ -16,8 +16,6 @@ public interface ProjectMapper {
 
     ProjectResponse toProjectResponse(Project project);
 
-
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "cameras", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

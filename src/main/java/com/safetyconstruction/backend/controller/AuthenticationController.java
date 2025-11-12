@@ -2,6 +2,8 @@ package com.safetyconstruction.backend.controller;
 
 import java.text.ParseException;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,11 +26,11 @@ import lombok.experimental.FieldDefaults;
 public class AuthenticationController {
     AuthenticationService authenticationService;
 
-    //    @PostMapping("/register")
-    //    ApiResponse<AuthenticationResponse> register(@Valid @RequestBody UserCreationRequest request) {
-    //        var result = authenticationService.register(request);
-    //        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
-    //    }
+    @PostMapping("/register")
+    ApiResponse<AuthenticationResponse> register(@Valid @RequestBody UserCreationRequest request) {
+        var result = authenticationService.register(request);
+        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
+    }
 
     @PostMapping("/token")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {

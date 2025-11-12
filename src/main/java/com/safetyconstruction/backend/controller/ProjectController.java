@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.safetyconstruction.backend.dto.request.ApiResponse;
 import com.safetyconstruction.backend.dto.request.project.ProjectCreationRequest;
-import com.safetyconstruction.backend.dto.request.project.ProjectUpdateRequest; // THÊM
+import com.safetyconstruction.backend.dto.request.project.ProjectUpdateRequest;
 import com.safetyconstruction.backend.dto.response.ProjectResponse;
 import com.safetyconstruction.backend.service.ProjectService;
 
@@ -76,10 +76,10 @@ public class ProjectController {
      * - MANAGER: chỉ có thể cập nhật project do mình quản lý
      */
     @PutMapping("/{id}")
-//    @PreAuthorize("hasAuthority('PROJECT_UPDATE') and (hasAuthority('ADMIN') or @projectService.isProjectManager(#id, authentication.name))")
+    //    @PreAuthorize("hasAuthority('PROJECT_UPDATE') and (hasAuthority('ADMIN') or
+    // @projectService.isProjectManager(#id, authentication.name))")
     public ApiResponse<ProjectResponse> update(
-            @PathVariable Long id,
-            @Valid @RequestBody ProjectUpdateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody ProjectUpdateRequest request) {
         log.info("Controller: Updating project id {}", id);
         return ApiResponse.<ProjectResponse>builder()
                 .message("Project updated successfully")

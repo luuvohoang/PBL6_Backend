@@ -47,8 +47,7 @@ public class CameraService {
                 CameraSpecification.byName(name),
                 CameraSpecification.byLocation(location));
 
-        return cameraRepository.findAll(spec, pageable)
-                .map(cameraMapper::toCameraResponse);
+        return cameraRepository.findAll(spec, pageable).map(cameraMapper::toCameraResponse);
     }
 
     /**
@@ -59,12 +58,10 @@ public class CameraService {
     public Page<CameraResponse> getAllCameras(String name, String location, Pageable pageable) {
         log.info("Service: Getting all cameras globally");
 
-        Specification<Camera> spec = Specification.allOf(
-                CameraSpecification.byName(name),
-                CameraSpecification.byLocation(location));
+        Specification<Camera> spec =
+                Specification.allOf(CameraSpecification.byName(name), CameraSpecification.byLocation(location));
 
-        return cameraRepository.findAll(spec, pageable)
-                .map(cameraMapper::toCameraResponse);
+        return cameraRepository.findAll(spec, pageable).map(cameraMapper::toCameraResponse);
     }
 
     /**
@@ -76,8 +73,7 @@ public class CameraService {
     public CameraResponse getCameraById(Long id) {
         log.info("Service: Getting camera id {}", id);
 
-        Camera camera = cameraRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
+        Camera camera = cameraRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
 
         return cameraMapper.toCameraResponse(camera);
     }
@@ -90,8 +86,8 @@ public class CameraService {
     public CameraResponse createCameraWithProject(Long projectId, CameraCreationRequest request) {
         log.info("Service: Creating camera for project {}", projectId);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+        Project project =
+                projectRepository.findById(projectId).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         Camera camera = cameraMapper.toCamera(request);
         camera.setProject(project);
@@ -106,8 +102,8 @@ public class CameraService {
      */
     @PreAuthorize("hasAuthority('CAMERA_UPDATE')")
     public CameraResponse updateCamera(Long cameraId, CameraUpdateRequest request) {
-        Camera camera = cameraRepository.findById(cameraId)
-                .orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
+        Camera camera =
+                cameraRepository.findById(cameraId).orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
 
         cameraMapper.updateCamera(camera, request);
         return cameraMapper.toCameraResponse(cameraRepository.save(camera));
@@ -119,8 +115,7 @@ public class CameraService {
      */
     @PreAuthorize("hasAuthority('CAMERA_DELETE')")
     public void deleteCamera(Long id) {
-        Camera camera = cameraRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
+        Camera camera = cameraRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.CAMERA_NOT_FOUND));
 
         cameraRepository.delete(camera);
         log.info("Deleted camera id {}", id);

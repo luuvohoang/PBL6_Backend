@@ -2,11 +2,11 @@ package com.safetyconstruction.backend.controller;
 
 import java.util.List;
 
-import com.safetyconstruction.backend.dto.request.role.RoleUpdateRequest;
 import org.springframework.web.bind.annotation.*;
 
 import com.safetyconstruction.backend.dto.request.ApiResponse;
 import com.safetyconstruction.backend.dto.request.role.RoleCreationRequest;
+import com.safetyconstruction.backend.dto.request.role.RoleUpdateRequest;
 import com.safetyconstruction.backend.dto.response.RoleResponse;
 import com.safetyconstruction.backend.service.RoleService;
 
@@ -16,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/roles")
+@RequestMapping("/api/roles")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
@@ -39,10 +39,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleName}")
-    ApiResponse<RoleResponse> update(
-            @PathVariable String roleName,
-            @RequestBody RoleUpdateRequest request
-    ) {
+    ApiResponse<RoleResponse> update(@PathVariable String roleName, @RequestBody RoleUpdateRequest request) {
         return ApiResponse.<RoleResponse>builder()
                 .message("Role updated successfully")
                 .result(roleService.update(roleName, request))

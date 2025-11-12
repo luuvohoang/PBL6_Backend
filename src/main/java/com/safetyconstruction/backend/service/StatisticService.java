@@ -61,7 +61,7 @@ public class StatisticService {
 
     /**
      * Lấy số lượng Alert, NHÓM THEO NGÀY TRONG TUẦN
-     * - ADMIN: Toàn quyền  
+     * - ADMIN: Toàn quyền
      * - MANAGER: Chỉ xem thống kê projects được phân công
      */
     @Transactional(readOnly = true)

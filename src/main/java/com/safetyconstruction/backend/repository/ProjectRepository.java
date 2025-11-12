@@ -13,7 +13,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Page<Project> searchProjects(String name, String location, String status, Pageable pageable);
 
     Page<Project> findByManagerId(String id, Pageable pageable);
-//    Page<Project> findByManagerName(String managerName, Pageable pageable);
+    //    Page<Project> findByManagerName(String managerName, Pageable pageable);
 
     boolean existsByIdAndManagerName(Long projectId, String username);
 }

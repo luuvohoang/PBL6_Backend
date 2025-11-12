@@ -3,9 +3,10 @@ package com.safetyconstruction.backend.dto.request;
 import java.time.LocalDate;
 import java.util.Set;
 
-import com.safetyconstruction.backend.dto.request.role.RoleCreationRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
+
+import com.safetyconstruction.backend.dto.request.role.RoleCreationRequest;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
