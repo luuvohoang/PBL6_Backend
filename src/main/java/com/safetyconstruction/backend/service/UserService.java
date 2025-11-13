@@ -126,7 +126,9 @@ public class UserService {
 
     @PostAuthorize("hasRole('ADMIN') or returnObject.name == authentication.name")
     public UserResponse getUser(String id) {
-        return userMapper.toUserResponse(
-                userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found")));
+        return userMapper.toUserResponse(userRepository
+                .findById(id)
+                // SỬA LỖI: Ném ra AppException (404)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }
 }

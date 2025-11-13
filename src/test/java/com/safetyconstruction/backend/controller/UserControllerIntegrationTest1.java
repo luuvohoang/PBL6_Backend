@@ -51,22 +51,22 @@ public class UserControllerIntegrationTest1 {
         userResponse = UserResponse.builder().id("1").name("testuser").build();
     }
 
-//        @Test
-////     Test for creating a user with valid request
-//        void createUserTest_validRequest_success() throws Exception {
-//            // GIVEN
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            objectMapper.registerModule(new JavaTimeModule());
-//            String content = objectMapper.writeValueAsString(userCreationRequest);
-//
-//            //         WHEN, THEN
-//            var responce = mockMvc.perform(MockMvcRequestBuilders.post("/users")
-//                            .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                            .content(content))
-//                    .andExpect(MockMvcResultMatchers.status().isOk())
-//                    .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
-//                    .andExpect(MockMvcResultMatchers.jsonPath("result.name").value("testuser"));
-//
-//            log.info("Result: {}", responce.andReturn().getResponse().getContentAsString());
-//        }
+    //        @Test
+    ////     Test for creating a user with valid request
+    //        void createUserTest_validRequest_success() throws Exception {
+    //            // GIVEN
+    //            ObjectMapper objectMapper = new ObjectMapper();
+    //            objectMapper.registerModule(new JavaTimeModule());
+    //            String content = objectMapper.writeValueAsString(userCreationRequest);
+    //
+    //            //         WHEN, THEN
+    //            var responce = mockMvc.perform(MockMvcRequestBuilders.post("/users")
+    //                            .contentType(MediaType.APPLICATION_JSON_VALUE)
+    //                            .content(content))
+    //                    .andExpect(MockMvcResultMatchers.status().isOk())
+    //                    .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
+    //                    .andExpect(MockMvcResultMatchers.jsonPath("result.name").value("testuser"));
+    //
+    //            log.info("Result: {}", responce.andReturn().getResponse().getContentAsString());
+    //        }
 }

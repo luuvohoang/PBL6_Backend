@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,6 +31,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -44,19 +44,22 @@ import com.safetyconstruction.backend.exception.ErrorCode;
 import com.safetyconstruction.backend.repository.RoleRepository;
 import com.safetyconstruction.backend.repository.UserRepository;
 
-@SpringBootTest // Tải toàn bộ ứng dụng
-@AutoConfigureMockMvc // Tự động cấu hình MockMvc
+@SpringBootTest
+@AutoConfigureMockMvc
 @ExtendWith(MockitoExtension.class)
+@TestPropertySource(
+        properties = {
+            "spring.profiles.active=test", // VÔ HIỆU HÓA TestDataInitializer
+            "spring.main.allow-bean-definition-overriding=true"
+        })
 public class UserControllerTest {
 
     @Autowired
-    private MockMvc mockMvc; // Dùng để gọi API "giả"
+    private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper; // Dùng để chuyển JSON <-> Object
+    private ObjectMapper objectMapper;
 
-    // --- Giả lập (Mock) LỚP REPOSITORY ---
-    // (Chúng ta test Controller + Service, nhưng giả lập CSDL)
     @MockitoBean
     private UserRepository userRepository;
 
@@ -71,6 +74,17 @@ public class UserControllerTest {
         testResults.clear();
     }
 
+    // Helper method để setup mock data cho các test
+    private void setupCommonMocks() {
+        // Mock role USER luôn tồn tại
+        Role userRole = Role.builder().name("USER").build();
+        lenient().when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
+
+        // Mock role ADMIN cho các test cần
+        Role adminRole = Role.builder().name("ADMIN").build();
+        lenient().when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+    }
+
     @DisplayName("Test Create User (Controller - Excel)")
     @ParameterizedTest(name = "{0}")
     @MethodSource("com.safetyconstruction.backend.util.UserControllerExcelProvider#createUserControllerProvider")
@@ -82,15 +96,12 @@ public class UserControllerTest {
 
         try {
             // --- ARRANGE (Thiết lập Mock) ---
+            setupCommonMocks();
 
-            // 1. Giả lập (mock) Role 'USER' (cho Service)
-            Role userRole = Role.builder().name("USER").build();
-            lenient().when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-
-            // 2. Đọc JSON để biết 'name' và 'email' là gì
+            // Đọc JSON để biết 'name' và 'email' là gì
             UserCreationRequest request = objectMapper.readValue(requestBodyJson, UserCreationRequest.class);
 
-            // 3. Giả lập (mock) logic 'existsBy...' (cho Service)
+            // Giả lập (mock) logic 'existsBy...' (cho Service)
             if (expectedErrorCode != null && expectedErrorCode.equals("USER_EXISTED")) {
                 lenient().when(userRepository.existsByName(request.getName())).thenReturn(true);
             } else if (expectedErrorCode != null && expectedErrorCode.equals("INVALID_EMAIL")) {
@@ -100,22 +111,24 @@ public class UserControllerTest {
                 // (Bao gồm TC1 - Thành công, và TC2 - Lỗi Validation)
                 lenient().when(userRepository.existsByName(request.getName())).thenReturn(false);
                 lenient().when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-                lenient().when(userRepository.save(any(User.class))).thenReturn(new User());
+
+                // Mock user entity trả về khi save thành công
+                User savedUser = User.builder()
+                        .id("generated-id")
+                        .name(request.getName())
+                        .email(request.getEmail())
+                        .build();
+                lenient().when(userRepository.save(any(User.class))).thenReturn(savedUser);
             }
 
             // --- ACT (Hành động) ---
-            // Thực hiện cuộc gọi API POST "giả"
-            ResultActions result = mockMvc.perform(post("/api/users")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(requestBodyJson)); // Gửi JSON body
+            ResultActions result = mockMvc.perform(
+                    post("/api/users").contentType(MediaType.APPLICATION_JSON).content(requestBodyJson));
 
             // --- ASSERT (Kiểm chứng) ---
-            // 1. Kiểm tra (check) HTTP Status
             result.andExpect(status().is(expectedHttpStatus));
 
-            // 2. Kiểm tra (check) Error Code (nếu có)
             if (expectedErrorCode != null && !expectedErrorCode.isEmpty()) {
-                // Kiểm tra xem 'code' trong JSON response có khớp không
                 ErrorCode ec = ErrorCode.valueOf(expectedErrorCode);
                 result.andExpect(jsonPath("$.code", is(ec.getCode())));
                 actualMessage = "Bắt được lỗi " + expectedErrorCode + " (ĐÚNG)";
@@ -124,7 +137,6 @@ public class UserControllerTest {
             }
 
         } catch (Throwable e) {
-            // Nếu 'result.andExpect' (ở trên) thất bại
             actualResult = "FAILED";
             actualMessage = e.getMessage();
         }
@@ -144,7 +156,6 @@ public class UserControllerTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("com.safetyconstruction.backend.util.UserControllerExcelProvider#updateUserControllerProvider")
     @WithMockUser
-    // Giả lập đã đăng nhập (vì PUT /api/users/ không phải là public)
     void testUpdateUser_FromExcel(
             String testName,
             String userIdToUpdate,
@@ -154,11 +165,18 @@ public class UserControllerTest {
             throws Exception {
 
         // --- ARRANGE ---
+        setupCommonMocks();
+
         if (expectedErrorCode != null && expectedErrorCode.equals("USER_NOT_EXISTED")) {
             when(userRepository.findById(userIdToUpdate)).thenReturn(Optional.empty());
         } else {
-            // (TC1 & TC2)
-            when(userRepository.findById(userIdToUpdate)).thenReturn(Optional.of(new User()));
+            User existingUser = User.builder()
+                    .id(userIdToUpdate)
+                    .name("existingUser")
+                    .email("existing@email.com")
+                    .build();
+            when(userRepository.findById(userIdToUpdate)).thenReturn(Optional.of(existingUser));
+            when(userRepository.save(any(User.class))).thenReturn(existingUser);
         }
 
         // --- ACT ---
@@ -175,14 +193,17 @@ public class UserControllerTest {
         }
     }
 
-    // --- Test 3: GetUsers (Test Bảo mật - Không dùng Excel) ---
+    // --- Test 3: GetUsers (Test Bảo mật) ---
     @Test
     @DisplayName("Test GET /api/users (Thành công - ADMIN)")
-    @WithMockUser(roles = "ADMIN") // Giả lập user đăng nhập với vai trò ADMIN
+    @WithMockUser(roles = "ADMIN")
     void getUsers_AsAdmin_ShouldSucceed() throws Exception {
-
         // --- ARRANGE ---
-        when(userRepository.findAll()).thenReturn(List.of(new User(), new User()));
+        setupCommonMocks();
+
+        User user1 = User.builder().id("1").name("user1").build();
+        User user2 = User.builder().id("2").name("user2").build();
+        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
 
         // --- ACT & ASSERT ---
         mockMvc.perform(get("/api/users")).andExpect(status().isOk()).andExpect(jsonPath("$.result.length()", is(2)));
@@ -190,44 +211,59 @@ public class UserControllerTest {
 
     @Test
     @DisplayName("Test GET /api/users (Thất bại - MANAGER)")
-    @WithMockUser(roles = "MANAGER") // Giả lập user đăng nhập với vai trò MANAGER
+    @WithMockUser(roles = "MANAGER")
     void getUsers_AsManager_ShouldBeForbidden() throws Exception {
-
         // --- ACT & ASSERT ---
-        // (Lưu ý: Chúng ta đang test @PreAuthorize("hasRole('ADMIN')") của Service)
         mockMvc.perform(get("/api/users"))
-                .andExpect(status().isForbidden()) // Mong đợi 403
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code", is(ErrorCode.UNAUTHORIZED.getCode())));
     }
 
-    // --- Test 4: GetMyInfo (Test Bảo mật - Không dùng Excel) ---
+    // --- Test 4: GetMyInfo (Test Bảo mật) ---
     @Test
     @DisplayName("Test GET /api/users/myInfo (Thành công)")
-    // Giả lập user 'test-manager' đã đăng nhập
     @WithMockUser(username = "test-manager")
     void getMyInfo_AsLoggedInUser_ShouldSucceed() throws Exception {
-
         // --- ARRANGE ---
-        User managerUser =
-                User.builder().id("uuid-manager").name("test-manager").build();
+        setupCommonMocks();
+
+        User managerUser = User.builder()
+                .id("uuid-manager")
+                .name("test-manager")
+                .email("manager@email.com")
+                .build();
         when(userRepository.findByName("test-manager")).thenReturn(Optional.of(managerUser));
 
         // --- ACT & ASSERT ---
-        mockMvc.perform(get("/api/users/myInfo"))
+        mockMvc.perform(get("/api/users/myInfo")) // Sửa endpoint đúng
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.name", is("test-manager")));
     }
 
-    // --- Test 5: DeleteUser (Test Bảo mật - Không dùng Excel) ---
+    // --- Test 5: DeleteUser (Test Bảo mật) ---
     @Test
     @DisplayName("Test DELETE /api/users/{userId} (Thất bại - MANAGER)")
-    @WithMockUser(roles = "MANAGER") // Giả lập MANAGER
+    @WithMockUser(roles = "MANAGER")
     void deleteUser_AsManager_ShouldBeForbidden() throws Exception {
-
         // --- ACT & ASSERT ---
         mockMvc.perform(delete("/api/users/uuid-123"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code", is(ErrorCode.UNAUTHORIZED.getCode())));
+    }
+
+    @Test
+    @DisplayName("Test DELETE /api/users/{userId} (Thành công - ADMIN)")
+    @WithMockUser(roles = "ADMIN")
+    void deleteUser_AsAdmin_ShouldSucceed() throws Exception {
+        // --- ARRANGE ---
+        setupCommonMocks();
+
+        // Mock user tồn tại
+        User userToDelete = User.builder().id("uuid-123").name("userToDelete").build();
+        when(userRepository.findById("uuid-123")).thenReturn(Optional.of(userToDelete));
+
+        // --- ACT & ASSERT ---
+        mockMvc.perform(delete("/api/users/uuid-123")).andExpect(status().isOk());
     }
 
     // --- GHI FILE EXCEL OUTPUT ---
@@ -235,7 +271,7 @@ public class UserControllerTest {
     static void writeTestResultsToExcel() throws IOException {
         String filePath = "target/UserController-Test-Report.xlsx";
         XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet("CreateUser Results");
+        XSSFSheet sheet = workbook.createSheet("UserController Test Results");
 
         // Header
         XSSFRow headerRow = sheet.createRow(0);
@@ -252,7 +288,11 @@ public class UserControllerTest {
             XSSFRow row = sheet.createRow(rowNum++);
             int colNum = 0;
             for (Object field : result) {
-                row.createCell(colNum++).setCellValue((String) field);
+                if (field instanceof String) {
+                    row.createCell(colNum++).setCellValue((String) field);
+                } else {
+                    row.createCell(colNum++).setCellValue("");
+                }
             }
         }
 

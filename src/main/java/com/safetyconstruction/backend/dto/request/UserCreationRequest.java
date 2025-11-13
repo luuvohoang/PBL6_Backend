@@ -6,8 +6,6 @@ import java.util.Set;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
-import com.safetyconstruction.backend.dto.request.role.RoleCreationRequest;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +17,7 @@ import lombok.experimental.FieldDefaults;
 public class UserCreationRequest {
     String id;
 
-    @Size(min = 3, max = 15, message = "USERNAME_INVALID")
+    @Size(min = 3, max = 30, message = "USERNAME_INVALID")
     String name;
 
     @Email(message = "INVALID_EMAIL")
@@ -32,5 +30,5 @@ public class UserCreationRequest {
     String locale;
     LocalDate created_at;
     LocalDate updated_at;
-    Set<RoleCreationRequest> roles;
+    Set<String> roles;
 }
