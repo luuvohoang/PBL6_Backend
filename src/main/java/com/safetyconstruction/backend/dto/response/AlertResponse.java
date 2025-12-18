@@ -1,11 +1,5 @@
 package com.safetyconstruction.backend.dto.response;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-
-import com.safetyconstruction.backend.enums.AlertSeverity;
-import com.safetyconstruction.backend.enums.AlertStatus;
-
 import lombok.*;
 
 @Getter
@@ -14,18 +8,20 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AlertResponse {
-    Long id;
-    Long projectId;
-    Long cameraId;
-    String type;
-    AlertSeverity severity;
-    Float confidence;
-    AlertStatus alertStatus;
-    Instant happenedAt;
-    String imageKey;
-    String clipKey;
-    String metadata; // raw JSON string
-    String reviewerId;
-    String reviewNote;
-    LocalDateTime createdAt;
+    private Long id;
+    private String title;
+    private String body;
+    private String type;
+    private String alertStatus;
+    private String severity;
+    private Double confidence;
+    private String imageKey;
+    private String happenedAt;
+
+    // Chỉ lấy tên hoặc ID, không lấy cả object để tránh vòng lặp
+    private Long cameraId;
+    private String cameraName;
+    private String location;
+    private Long projectId;
+    private String projectName;
 }

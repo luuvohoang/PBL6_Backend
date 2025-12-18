@@ -38,7 +38,7 @@ public class BaseTest {
     @AfterMethod
     public void tearDown() {
         JavascriptExecutor js = (JavascriptExecutor) driver;
-// Lấy đối tượng coverage từ trình duyệt
+        // Lấy đối tượng coverage từ trình duyệt
         Object coverageData = js.executeScript("return window.__coverage__;");
         // Đóng trình duyệt sau khi mỗi test hoàn thành
         if (driver != null) {

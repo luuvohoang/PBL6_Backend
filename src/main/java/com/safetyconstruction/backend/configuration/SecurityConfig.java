@@ -23,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
-        "/api/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/auth/register"
+        "/api/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/auth/register",
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -49,6 +49,14 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/ws/**") // <-- SỬA LẠI THÀNH THẾ NÀY
                         .permitAll()
+                        .requestMatchers("/api/alerts/internal/**")
+                        .permitAll()
+                        .requestMatchers("/api/cameras/internal/**")
+                        .permitAll()
+                        .requestMatchers("/api/ai/**")
+                        .permitAll()
+                        .requestMatchers("/images/**") // <-- SỬA LẠI THÀNH THẾ NÀY
+                        .permitAll()
 
                         // Tùy chỉnh: nếu bạn muốn một số endpoint GET public, thêm ở đây
                         .anyRequest()
@@ -67,7 +75,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000", // Giữ lại để bạn test dưới máy local không bị lỗi
+                "http://3.107.210.157"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

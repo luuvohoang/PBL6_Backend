@@ -1,13 +1,20 @@
 // File: src/test/java/com/safetyconstruction/backend/controller/UserControllerTest.java
 package com.safetyconstruction.backend.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.safetyconstruction.backend.dto.request.UserCreationRequest;
-import com.safetyconstruction.backend.entity.Role;
-import com.safetyconstruction.backend.entity.User;
-import com.safetyconstruction.backend.exception.ErrorCode;
-import com.safetyconstruction.backend.repository.RoleRepository;
-import com.safetyconstruction.backend.repository.UserRepository;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,19 +36,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.safetyconstruction.backend.dto.request.UserCreationRequest;
+import com.safetyconstruction.backend.entity.Role;
+import com.safetyconstruction.backend.entity.User;
+import com.safetyconstruction.backend.exception.ErrorCode;
+import com.safetyconstruction.backend.repository.RoleRepository;
+import com.safetyconstruction.backend.repository.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

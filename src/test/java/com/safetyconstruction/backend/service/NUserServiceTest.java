@@ -67,16 +67,13 @@ class NUserServiceTest {
     private Role sampleRole;
 
     // Danh sách tĩnh (static) để lưu KẾT QUẢ của TẤT CẢ các test
-//    private static List<Object[]> testResults = new ArrayList<>();
-
+    //    private static List<Object[]> testResults = new ArrayList<>();
 
     private static Map<String, List<Object[]>> allTestResults = new HashMap<>();
 
     protected static void addTestResult(String sheetName, Object[] resultData) {
         // Lấy (hoặc tạo mới) danh sách kết quả cho sheet này
-        allTestResults
-                .computeIfAbsent(sheetName, k -> new ArrayList<>())
-                .add(resultData);
+        allTestResults.computeIfAbsent(sheetName, k -> new ArrayList<>()).add(resultData);
     }
 
     @BeforeAll
@@ -149,7 +146,7 @@ class NUserServiceTest {
             actualMessage = e.getMessage().replaceAll("\n", " ");
         }
         addTestResult("CreateUser", new Object[] {
-                testName, request.getName(), request.getEmail(), expectedError, actualResult, actualMessage
+            testName, request.getName(), request.getEmail(), expectedError, actualResult, actualMessage
         });
     }
 
@@ -189,7 +186,7 @@ class NUserServiceTest {
         }
         // (Giả sử tên sheet của bạn là "UpdateUser")
         addTestResult("UpdateUser", new Object[] {
-                testName, "UserID: " + userIdToUpdate, request.getEmail(), expectedError, actualResult, actualMessage
+            testName, "UserID: " + userIdToUpdate, request.getEmail(), expectedError, actualResult, actualMessage
         });
     }
 
@@ -213,9 +210,9 @@ class NUserServiceTest {
             actualMessage = e.getMessage().replaceAll("\n", " ");
         }
         // (Giả sử tên sheet của bạn là "DeleteUser")
-        addTestResult("DeleteUser", new Object[] {
-                testName, "UserID: " + userIdToDelete, "", expectedError, actualResult, actualMessage
-        });
+        addTestResult(
+                "DeleteUser",
+                new Object[] {testName, "UserID: " + userIdToDelete, "", expectedError, actualResult, actualMessage});
     }
 
     // --- Test 4: Đọc từ Sheet "GetMyInfo" ---
@@ -256,7 +253,7 @@ class NUserServiceTest {
         }
         // (Giả sử tên sheet của bạn là "GetMyInfo")
         addTestResult("GetMyInfo", new Object[] {
-                testName, "User: " + loggedInUser, "Expected: " + expectedName, expectedError, actualResult, actualMessage
+            testName, "User: " + loggedInUser, "Expected: " + expectedName, expectedError, actualResult, actualMessage
         });
     }
 
@@ -334,12 +331,12 @@ class NUserServiceTest {
 
         // (Giả sử tên sheet của bạn là "GetUser")
         addTestResult("GetUser", new Object[] {
-                testName,
-                "UserID: " + userId + ", LoggedIn: " + loggedInUser,
-                "Roles: " + userRoles + ", Expected: " + expectedUserName,
-                expectedError,
-                actualResult,
-                actualMessage
+            testName,
+            "UserID: " + userId + ", LoggedIn: " + loggedInUser,
+            "Roles: " + userRoles + ", Expected: " + expectedUserName,
+            expectedError,
+            actualResult,
+            actualMessage
         });
     }
 
@@ -359,7 +356,7 @@ class NUserServiceTest {
         SecurityContextHolder.setContext(securityContext);
     }
 
-//    import org.apache.poi.ss.usermodel.Cell; // (Hãy đảm bảo bạn đã import cái này)
+    //    import org.apache.poi.ss.usermodel.Cell; // (Hãy đảm bảo bạn đã import cái này)
 
     /**
      * Hàm trợ giúp MỚI để tìm chỉ số (index) của một cột dựa vào TÊN CỘT
@@ -373,7 +370,8 @@ class NUserServiceTest {
     private static int findColumnIndexByName(XSSFSheet sheet, int headerRowIndex, String columnName) {
         XSSFRow headerRow = sheet.getRow(headerRowIndex);
         if (headerRow == null) {
-            System.err.println("LỖI: Hàng tiêu đề (index " + headerRowIndex + ") không tồn tại trong sheet " + sheet.getSheetName());
+            System.err.println("LỖI: Hàng tiêu đề (index " + headerRowIndex + ") không tồn tại trong sheet "
+                    + sheet.getSheetName());
             return -1; // Không tìm thấy hàng
         }
 
@@ -427,22 +425,22 @@ class NUserServiceTest {
             // 4.1. Tìm chỉ số (index) của cột 'Test Case'
             int idColumnIndex = findColumnIndexByName(sheet, HEADER_ROW_INDEX, TEST_CASE_ID_COLUMN_NAME);
             if (idColumnIndex == -1) {
-                System.err.println("LỖI: Không tìm thấy cột '" + TEST_CASE_ID_COLUMN_NAME +
-                        "' trên sheet '" + sheetName + "'. Bỏ qua sheet này.");
+                System.err.println("LỖI: Không tìm thấy cột '" + TEST_CASE_ID_COLUMN_NAME + "' trên sheet '" + sheetName
+                        + "'. Bỏ qua sheet này.");
                 continue; // Chuyển sang sheet tiếp theo
             }
 
             // 4.2. Tìm chỉ số (index) của cột 'Actual Result'
             int resultColumnIndex = findColumnIndexByName(sheet, HEADER_ROW_INDEX, ACTUAL_RESULT_COLUMN_NAME);
             if (resultColumnIndex == -1) {
-                System.err.println("LỖI: Không tìm thấy cột '" + ACTUAL_RESULT_COLUMN_NAME +
-                        "' trên sheet '" + sheetName + "'. Bỏ qua sheet này.");
+                System.err.println("LỖI: Không tìm thấy cột '" + ACTUAL_RESULT_COLUMN_NAME + "' trên sheet '"
+                        + sheetName + "'. Bỏ qua sheet này.");
                 continue;
             }
 
-            System.out.println("Đang ghi sheet: " + sheetName +
-                    ". Dùng cột ID: " + idColumnIndex +
-                    ", cột Kết quả: " + resultColumnIndex);
+            System.out.println("Đang ghi sheet: " + sheetName + ". Dùng cột ID: "
+                    + idColumnIndex + ", cột Kết quả: "
+                    + resultColumnIndex);
 
             // --- BƯỚC 5: LẶP QUA KẾT QUẢ CỦA SHEET HIỆN TẠI ---
             for (Object[] result : sheetResults) {
@@ -459,7 +457,8 @@ class NUserServiceTest {
                     XSSFCell cell = row.getCell(resultColumnIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     cell.setCellValue(message);
                 } else {
-                    System.out.println("Không tìm thấy hàng cho Test Case ID: " + testCaseId + " trên sheet " + sheetName);
+                    System.out.println(
+                            "Không tìm thấy hàng cho Test Case ID: " + testCaseId + " trên sheet " + sheetName);
                 }
             }
         } // Kết thúc vòng lặp qua các sheet
@@ -500,7 +499,8 @@ class NUserServiceTest {
                                 // (Chỉ in ra nếu đây là lượt cuối cùng, nếu không sẽ rất ồn ào)
                                 if (pass == MAX_EVALUATION_PASSES) {
                                     System.err.println("LỖI TÍNH TOÁN (Lượt cuối): "
-                                            + sheet.getSheetName() + "!" + cell.getAddress().formatAsString()
+                                            + sheet.getSheetName() + "!"
+                                            + cell.getAddress().formatAsString()
                                             + ". Lỗi: " + e.getMessage());
                                 }
                             }
@@ -521,7 +521,7 @@ class NUserServiceTest {
         System.out.println("Báo cáo test đã được GHI VÀO TEMPLATE và lưu tại: " + outputPath);
     }
 
-// (Hàm findRowByTestCaseId(sheet, testCaseId) giữ nguyên như cũ)
+    // (Hàm findRowByTestCaseId(sheet, testCaseId) giữ nguyên như cũ)
 
     /**
      * Hàm trợ giúp để tìm hàng (row) dựa trên giá trị của một ô (Test Case ID).
@@ -539,7 +539,8 @@ class NUserServiceTest {
      * @param testCaseId ID cần tìm (ví dụ: "CU_TC01").
      * @return Hàng (XSSFRow) nếu tìm thấy, ngược lại trả về null.
      */
-    private static XSSFRow findRowByTestCaseId(XSSFSheet sheet, int idColumnIndex, int headerRowIndex, String testCaseId) {
+    private static XSSFRow findRowByTestCaseId(
+            XSSFSheet sheet, int idColumnIndex, int headerRowIndex, String testCaseId) {
 
         // Lặp qua tất cả các hàng, bắt đầu TỪ SAU hàng tiêu đề
         for (int i = headerRowIndex + 1; i <= sheet.getLastRowNum(); i++) {
@@ -561,4 +562,3 @@ class NUserServiceTest {
         return null; // Không tìm thấy
     }
 }
-

@@ -1,5 +1,7 @@
 package com.safetyconstruction.backend.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -119,5 +121,16 @@ public class CameraService {
 
         cameraRepository.delete(camera);
         log.info("Deleted camera id {}", id);
+    }
+
+    // Trong class CameraService
+    public List<CameraResponse> getAllActiveCameras() {
+        // 1. Lấy tất cả camera từ DB (có thể thêm điều kiện findByStatus("ACTIVE"))
+        var cameras = cameraRepository.findAll();
+
+        // 2. Map từ Entity sang DTO Response
+        return cameras.stream()
+                .map(cameraMapper::toCameraResponse) // Hoặc dùng hàm map thủ công của bạn
+                .toList();
     }
 }

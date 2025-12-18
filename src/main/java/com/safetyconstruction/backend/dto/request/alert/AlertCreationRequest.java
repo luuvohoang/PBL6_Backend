@@ -35,6 +35,8 @@ public class AlertCreationRequest {
     @Size(max = 1024)
     String imageKey;
 
+    private String image;
+
     @Size(max = 1024)
     String clipKey;
 

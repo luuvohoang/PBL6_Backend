@@ -26,6 +26,12 @@
 		<tag/>
 		<url/>
 	</scm>
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
 	<properties>
 		<java.version>21</java.version>
 		<projectlombok-lombok.version>1.18.42</projectlombok-lombok.version>
@@ -170,6 +176,27 @@
 			<artifactId>webdrivermanager</artifactId>
 			<version>5.8.0</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.imagekit-developer</groupId>
+			<artifactId>imagekit-java</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.12.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.10.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okio</groupId>
+			<artifactId>okio</artifactId>
+			<version>3.9.0</version>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

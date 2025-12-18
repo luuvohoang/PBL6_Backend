@@ -1,5 +1,7 @@
 package com.safetyconstruction.backend.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,5 +40,17 @@ public class GlobalCameraController {
         // Gọi phương thức service toàn cục
         Page<CameraResponse> page = cameraService.getAllCameras(name, location, pageable);
         return ApiResponse.<Page<CameraResponse>>builder().result(page).build();
+    }
+
+    @GetMapping("/internal/active-list")
+    public ApiResponse<List<CameraResponse>> getActiveCamerasForAI() {
+        // Gọi hàm mới vừa viết ở Bước 1
+        // Lưu ý: Hàm này trả về List, không phải Page -> Hết lỗi
+        List<CameraResponse> cameras = cameraService.getAllActiveCameras();
+
+        return ApiResponse.<List<CameraResponse>>builder()
+                .code(1000)
+                .result(cameras)
+                .build();
     }
 }

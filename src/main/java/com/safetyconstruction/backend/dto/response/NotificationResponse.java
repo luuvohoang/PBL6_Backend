@@ -1,5 +1,6 @@
 package com.safetyconstruction.backend.dto.response;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class NotificationResponse {
+public class NotificationResponse implements Serializable {
 
     Long id;
 

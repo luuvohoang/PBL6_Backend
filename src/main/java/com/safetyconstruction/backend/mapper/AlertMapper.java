@@ -17,7 +17,7 @@ public interface AlertMapper {
     @Mapping(source = "project.id", target = "projectId") // <-- SỬA LỖI 1
     @Mapping(source = "camera.id", target = "cameraId") // <-- SỬA LỖI 2
     @Mapping(source = "alertStatus", target = "alertStatus") // (Đã có trong DTO của bạn)
-    @Mapping(source = "reviewer.id", target = "reviewerId")
+    //    @Mapping(source = "reviewer.id", target = "reviewerId")
     AlertResponse toAlert(Alert alert);
 
     // 2. Mapper cho 'create' (thay thế .builder())
