@@ -26,8 +26,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         // SỬA LỖI: Xóa context-path khỏi đây
         // TỪ: registry.addEndpoint("/safetyconstruction/ws")
-        registry.addEndpoint("/ws") // <-- SỬA LẠI THÀNH THẾ NÀY
-                .setAllowedOrigins("http://localhost:3000")
+        registry.addEndpoint("/safetyconstruction/ws") // Phải khớp với prefix của Nginx
+                .setAllowedOriginPatterns("*") // Dùng Pattern thay vì Origins
                 .withSockJS();
     }
 }

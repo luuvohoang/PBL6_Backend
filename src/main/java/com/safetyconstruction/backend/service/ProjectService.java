@@ -53,7 +53,9 @@ public class ProjectService {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ProjectResponse create(ProjectCreationRequest request) {
         log.info("Service: Creating project");
-
+        if (projectRepository.existsByName(request.getName())) {
+            throw new AppException(ErrorCode.PROJECT_EXISTED);
+        }
         Project project = projectMapper.toProject(request);
 
         Set<Camera> cameras = new HashSet<>();

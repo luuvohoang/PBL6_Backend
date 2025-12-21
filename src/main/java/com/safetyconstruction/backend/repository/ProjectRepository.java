@@ -1,5 +1,7 @@
 package com.safetyconstruction.backend.repository;
 
+import jakarta.validation.constraints.Size;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +18,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     //    Page<Project> findByManagerName(String managerName, Pageable pageable);
 
     boolean existsByIdAndManagerName(Long projectId, String username);
+
+    boolean existsByName(@Size(min = 3, max = 100, message = "NAME_SIZE") String name);
 }

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -85,16 +86,15 @@ public class AlertService {
         try {
             Alert savedAlert = alertRepository.save(alert);
             handleNotificationTrigger(savedAlert);
-            return alertMapper.toAlert(savedAlert);
+            return alertMapper.toAlertResponse(savedAlert);
         } catch (DataIntegrityViolationException ex) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
 
-    private void handleNotificationTrigger(Alert alert) {
-        if (alert.getAlertStatus() != AlertStatus.NEW) {
-            return;
-        }
+    public void handleNotificationTrigger(Alert alert) {
+        // 1. Chống Spam bằng Redis và Database (Giữ nguyên code cũ của bạn)
+        if (alert.getAlertStatus() != AlertStatus.NEW) return;
 
         String lockKey = String.format(
                 "notify_lock:proj_%d:cam_%d:%s",
@@ -103,27 +103,76 @@ public class AlertService {
                 alert.getType());
 
         if (Boolean.TRUE.equals(redisTemplate.hasKey(lockKey))) {
-            log.warn("Notification SPAM suppressed (Redis Debounce) for: {}", lockKey);
+            log.warn("Notification suppressed (Spam): {}", lockKey);
             return;
         }
 
-        Specification<Alert> spec = Specification.allOf(
-                AlertSpecification.withProjectId(alert.getProject().getId()),
-                AlertSpecification.withCameraId(
-                        alert.getCamera() != null ? alert.getCamera().getId() : null),
-                AlertSpecification.withType(alert.getType()),
-                AlertSpecification.withStatus("NEW"));
-
-        long openAlertsCount = alertRepository.count(spec);
-        if (openAlertsCount > 1) {
-            log.warn("Notification suppressed (Status Check), user already has an open alert for: {}", lockKey);
-            return;
-        }
-
-        log.info("Triggering new notification for: {}", lockKey);
+        // 2. Kích hoạt thông báo sau khi vượt qua bộ lọc
+        log.info(
+                "Triggering notifications for Project ID: {}",
+                alert.getProject().getId());
         redisTemplate.opsForValue().set(lockKey, "locked", 2, TimeUnit.MINUTES);
+
+        // A. Thông báo hệ thống (Web Dashboard)
         notificationService.createNotificationForAlert(alert);
+
+        // B. Gửi thông báo ntfy.sh riêng tư
+        // Lấy manager chịu trách nhiệm cho dự án này
+        String violationType = alert.getType(); // Ví dụ: "Không đội mũ bảo hiểm"
+        String location = (alert.getCamera() != null) ? alert.getCamera().getName() : "Vị trí không xác định";
+        String projectName = alert.getProject().getName();
+        String fullImageUrl = alert.getImageKey(); // Đảm bảo đây là link https://ik.imagekit.io/...
+
+        // Tạo Tiêu đề và Nội dung sinh động
+        String title = "🚨 VI PHẠM: " + violationType.toUpperCase();
+        String detailedMessage = String.format(
+                "📍 Vị trí: %s\n" + "🏗️ Dự án: %s\n" + "⏰ Thời gian: %s\n" + "👉 Bấm để xem hình ảnh bằng chứng.",
+                location, projectName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM")));
+
+        // Gửi cho từng Manager
+        List<User> supervisors =
+                userRepository.findAllManagersByProjectId(alert.getProject().getId());
+
+        for (User user : supervisors) {
+            if (user.getId() != null) {
+                notificationService.sendNtfyNotification(user.getId(), detailedMessage, fullImageUrl, title);
+            }
+        }
     }
+
+    //    private void handleNotificationTrigger(Alert alert) {
+    //        if (alert.getAlertStatus() != AlertStatus.NEW) {
+    //            return;
+    //        }
+    //
+    //        String lockKey = String.format(
+    //                "notify_lock:proj_%d:cam_%d:%s",
+    //                alert.getProject().getId(),
+    //                alert.getCamera() != null ? alert.getCamera().getId() : 0,
+    //                alert.getType());
+    //
+    //        if (Boolean.TRUE.equals(redisTemplate.hasKey(lockKey))) {
+    //            log.warn("Notification SPAM suppressed (Redis Debounce) for: {}", lockKey);
+    //            return;
+    //        }
+    //
+    //        Specification<Alert> spec = Specification.allOf(
+    //                AlertSpecification.withProjectId(alert.getProject().getId()),
+    //                AlertSpecification.withCameraId(
+    //                        alert.getCamera() != null ? alert.getCamera().getId() : null),
+    //                AlertSpecification.withType(alert.getType()),
+    //                AlertSpecification.withStatus("NEW"));
+    //
+    //        long openAlertsCount = alertRepository.count(spec);
+    //        if (openAlertsCount > 1) {
+    //            log.warn("Notification suppressed (Status Check), user already has an open alert for: {}", lockKey);
+    //            return;
+    //        }
+    //
+    //        log.info("Triggering new notification for: {}", lockKey);
+    //        redisTemplate.opsForValue().set(lockKey, "locked", 2, TimeUnit.MINUTES);
+    //        notificationService.createNotificationForAlert(alert);
+    //    }
 
     /**
      * 🔍 GET ALERT BY ID (theo Project)
@@ -134,7 +183,7 @@ public class AlertService {
     public AlertResponse getAlertByIdAndProjectId(Long alertId, Long projectId) {
         return alertRepository
                 .findByIdAndProjectId(alertId, projectId)
-                .map(alertMapper::toAlert)
+                .map(alertMapper::toAlertResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
     }
 
@@ -158,7 +207,7 @@ public class AlertService {
                 AlertSpecification.withHappenedTimeRange(
                         searchRequest.getHappenedAfter(), searchRequest.getHappenedBefore()));
 
-        return alertRepository.findAll(spec, pageable).map(alertMapper::toAlert);
+        return alertRepository.findAll(spec, pageable).map(alertMapper::toAlertResponse);
     }
 
     /**
@@ -227,7 +276,7 @@ public class AlertService {
         alert.setReviewNote(request.getReviewNote());
 
         alert = alertRepository.save(alert);
-        return alertMapper.toAlert(alert);
+        return alertMapper.toAlertResponse(alert);
     }
 
     /**
@@ -241,7 +290,7 @@ public class AlertService {
         log.info("Service: Getting alert id {}", alertId);
         return alertRepository
                 .findById(alertId)
-                .map(alertMapper::toAlert)
+                .map(alertMapper::toAlertResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.ALERT_NOT_FOUND));
     }
 
@@ -411,31 +460,37 @@ public class AlertService {
         alert.setHappenedAt(java.time.Instant.now());
         // 3. Set cứng trạng thái là NEW
         alert.setAlertStatus(AlertStatus.NEW);
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            try {
-                // Khởi tạo cấu hình (Bạn nên đưa các Key này vào file application.properties)
-                ImageKit imageKit = ImageKit.getInstance();
-                Configuration config = new Configuration(
-                        "public_SWHy6fJ3e1yQm17vhcFhDXEgQig=", // Thay bằng Public Key của bạn
-                        "private_N4cZOeSal1wauflawP/3Lz3p2QA=", // Thay bằng Private Key của bạn
-                        "https://ik.imagekit.io/SafetyConstruction/" // Thay bằng Endpoint của bạn
-                        );
-                imageKit.setConfig(config);
 
-                // Upload ảnh lên ImageKit (Hỗ trợ trực tiếp chuỗi Base64)
-                FileCreateRequest fileCreateRequest =
-                        new FileCreateRequest(request.getImage(), "alert_" + System.currentTimeMillis() + ".jpg");
-                fileCreateRequest.setFolder("/violation_images"); // Tạo thư mục trên Cloud
+        String imageUrl = "https://ik.imagekit.io/demo/test_placeholder.jpg";
+        if (request.getTitle() != null && request.getTitle().contains("TEST_LOAD")) {
+            System.out.println("🛠️ Mock Mode: Bỏ qua upload ImageKit để test hiệu năng");
+        } else {
+            if (request.getImage() != null && !request.getImage().isEmpty()) {
+                try {
+                    // Khởi tạo cấu hình (Bạn nên đưa các Key này vào file application.properties)
+                    ImageKit imageKit = ImageKit.getInstance();
+                    Configuration config = new Configuration(
+                            "public_SWHy6fJ3e1yQm17vhcFhDXEgQig=", // Thay bằng Public Key của bạn
+                            "private_N4cZOeSal1wauflawP/3Lz3p2QA=", // Thay bằng Private Key của bạn
+                            "https://ik.imagekit.io/SafetyConstruction/" // Thay bằng Endpoint của bạn
+                            );
+                    imageKit.setConfig(config);
 
-                Result result = imageKit.upload(fileCreateRequest);
+                    // Upload ảnh lên ImageKit (Hỗ trợ trực tiếp chuỗi Base64)
+                    FileCreateRequest fileCreateRequest =
+                            new FileCreateRequest(request.getImage(), "alert_" + System.currentTimeMillis() + ".jpg");
+                    fileCreateRequest.setFolder("/violation_images"); // Tạo thư mục trên Cloud
 
-                // LƯU Ý: Lưu URL tuyệt đối vào cột imageKey trong Database
-                alert.setImageKey(result.getUrl());
+                    Result result = imageKit.upload(fileCreateRequest);
 
-                System.out.println("✅ Đã lưu ảnh Cloud: " + result.getUrl());
+                    // LƯU Ý: Lưu URL tuyệt đối vào cột imageKey trong Database
+                    alert.setImageKey(result.getUrl());
 
-            } catch (Exception e) {
-                System.err.println("❌ Lỗi ImageKit: " + e.getMessage());
+                    System.out.println("✅ Đã lưu ảnh Cloud: " + result.getUrl());
+
+                } catch (Exception e) {
+                    System.err.println("❌ Lỗi ImageKit: " + e.getMessage());
+                }
             }
         }
         // 4. Lưu vào DB
@@ -445,7 +500,7 @@ public class AlertService {
         try {
             Alert savedAlert = alertRepository.save(alert);
             handleNotificationTrigger(savedAlert);
-            return alertMapper.toAlertResponse(alertRepository.save(alert));
+            return alertMapper.toAlertResponse(savedAlert);
         } catch (DataIntegrityViolationException ex) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }

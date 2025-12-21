@@ -24,7 +24,8 @@ public enum ErrorCode {
     ROLE_EXISTED(1013, "Role existed", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(1014, "Role not found", HttpStatus.NOT_FOUND),
     PERMISSION_NOT_FOUND(1015, "Permission not found", HttpStatus.NOT_FOUND),
-    ACCOUNT_LOCKED(1016, "Account is locked", HttpStatus.FORBIDDEN);
+    ACCOUNT_LOCKED(1016, "Account is locked", HttpStatus.FORBIDDEN),
+    PROJECT_EXISTED(1017, "Project existed", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {
         this.code = code;

@@ -1,5 +1,6 @@
 package com.safetyconstruction.backend.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,11 +10,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import com.safetyconstruction.backend.dto.response.NotificationResponse;
 import com.safetyconstruction.backend.entity.Alert;
@@ -47,6 +53,37 @@ public class NotificationService {
     RoleRepository roleRepository;
 
     SimpMessagingTemplate messagingTemplate;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Async("taskExecutor")
+    public void sendNtfyNotification(String userId, String message, String imageUrl, String title) {
+        String topic = "safety-alert-" + userId;
+        String url = "https://ntfy.sh/" + topic;
+
+        // 1. Cấu hình Header
+        HttpHeaders headers = new HttpHeaders();
+        // Quan trọng: Chỉ định rõ Content-Type là UTF-8
+        headers.setContentType(new MediaType("text", "plain", StandardCharsets.UTF_8));
+
+        headers.set("Title", title);
+        headers.set("Priority", "5");
+        headers.set("Tags", "warning,construction");
+        headers.set("Attach", imageUrl);
+        headers.set("Click", imageUrl);
+        headers.set("Actions", "view, Xem bằng chứng, " + imageUrl);
+
+        // 2. Chuyển tin nhắn sang mảng byte UTF-8 để tránh lỗi 400
+        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+        HttpEntity<byte[]> entity = new HttpEntity<>(messageBytes, headers);
+
+        try {
+            log.info("🚀 Đang gửi thông báo UTF-8 tới: {}", topic);
+            restTemplate.postForEntity(url, entity, String.class);
+        } catch (Exception e) {
+            log.error("❌ Lỗi gửi ntfy: {}", e.getMessage());
+        }
+    }
 
     @Transactional
     public void createNotificationForAlert(Alert alert) {

@@ -47,7 +47,7 @@ public class SecurityConfig {
                         // Cho phép POST tới các endpoint public (vd: /auth/token)
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
                         .permitAll()
-                        .requestMatchers("/ws/**") // <-- SỬA LẠI THÀNH THẾ NÀY
+                        .requestMatchers("/safetyconstruction/ws/**") // <-- SỬA LẠI THÀNH THẾ NÀY
                         .permitAll()
                         .requestMatchers("/api/alerts/internal/**")
                         .permitAll()
@@ -77,7 +77,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000", // Giữ lại để bạn test dưới máy local không bị lỗi
-                "http://3.107.210.157"));
+                "http://3.107.177.233"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
