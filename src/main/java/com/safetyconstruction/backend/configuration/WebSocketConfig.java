@@ -23,11 +23,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-
-        // SỬA LỖI: Xóa context-path khỏi đây
-        // TỪ: registry.addEndpoint("/safetyconstruction/ws")
-        registry.addEndpoint("/safetyconstruction/ws") // Phải khớp với prefix của Nginx
-                .setAllowedOriginPatterns("*") // Dùng Pattern thay vì Origins
+        // Nếu Nginx chuyển tiếp /safetyconstruction/ws vào, bạn nên đăng ký như sau:
+        registry.addEndpoint("/ws", "/safetyconstruction/ws")
+                .setAllowedOriginPatterns("*") // Dùng Patterns thay vì Origins để tránh lỗi Credential
                 .withSockJS();
     }
 }

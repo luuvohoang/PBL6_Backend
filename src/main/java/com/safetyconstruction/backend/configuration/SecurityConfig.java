@@ -35,33 +35,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                // Bật CORS: Spring Security sẽ dùng bean CorsConfigurationSource nếu có
                 .cors(Customizer.withDefaults())
-                // Tắt CSRF cho API (thường dùng token)
-                .csrf(AbstractHttpConfigurer::disable)
-                // Cho phép preflight OPTIONS đi qua trước khi yêu cầu auth
+                .csrf(AbstractHttpConfigurer::disable) // SockJS cần tắt CSRF
                 .authorizeHttpRequests(authorize -> authorize
-                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
-                        // Cho phép POST tới các endpoint public (vd: /auth/token)
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
                         .permitAll()
-                        .requestMatchers("/safetyconstruction/ws/**") // <-- SỬA LẠI THÀNH THẾ NÀY
-                        .permitAll()
-                        .requestMatchers("/api/alerts/internal/**")
-                        .permitAll()
-                        .requestMatchers("/api/cameras/internal/**")
-                        .permitAll()
-                        .requestMatchers("/api/ai/**")
-                        .permitAll()
-                        .requestMatchers("/images/**") // <-- SỬA LẠI THÀNH THẾ NÀY
-                        .permitAll()
 
-                        // Tùy chỉnh: nếu bạn muốn một số endpoint GET public, thêm ở đây
+                        // CHỈNH SỬA TẠI ĐÂY: Cho phép cả 2 trường hợp để "bao vây" lỗi
+                        .requestMatchers("/ws/**", "/safetyconstruction/ws/**")
+                        .permitAll()
+                        .requestMatchers("/api/alerts/internal/**", "/api/cameras/internal/**", "/api/ai/**")
+                        .permitAll()
+                        .requestMatchers("/images/**")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
-                // OAuth2 resource server (JWT) + custom decoder + entry point nếu cần
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
                                 .decoder(customJwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
